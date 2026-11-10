@@ -1,5 +1,5 @@
 // Lautsprecherbox (Stereo-Paar, 2 Stueck) – Buche 18 mm
-// 40 x 30 x 25 cm, 2-Wege: Tieftoener Oe 18 cm + Hochtoener, Bassreflexrohr hinten
+// 40 x 30 x 25 cm, 2-Wege: Tieftoener Oe 18 cm + Hochtoener, Sanduhr-Bassreflexrohr hinten
 // Einheiten: mm.  Koordinaten (Box "links", von vorne gesehen):
 //   x = Breite (links -> rechts), y = Tiefe (Front bei y = 0), z = Hoehe (Boden bei z = 0)
 // Box "rechts" ist das Spiegelbild: Hochtoener sitzen bei beiden Boxen innen (zur Mitte).
@@ -9,12 +9,15 @@
 //   "paar"        – beide Boxen nebeneinander, wie sie aufgestellt werden
 //   "schnitt"     – Blick ins Innere (Deckel + eine Seite ausgeblendet)
 //   "explosion"   – alle Holzteile auseinandergezogen
-//   "rohr"        – Bassreflexrohr mit Aussenflansch (3D-Druck, STL exportieren)
-//   "trichter"    – innerer Rohrtrichter zum Aufstecken (3D-Druck, STL exportieren)
+//   "rohr_aussen" / "rohr_innen" / "rohr_muffe" – die 3 Druckteile des Rohrs (STL exportieren)
+//   "rohr_schnitt" – das zusammengesetzte Rohr, aufgeschnitten
 //   "front" / "rueckwand" / "strebe" – Platten flach (2D) zum Anzeichnen
 
 ansicht = "zusammenbau";
 box     = "links";      // "links" oder "rechts" (Spiegelbild)
+
+// Innenkontur + Masse des Rohrs, berechnet von rohr_aerodynamik.py
+include <rohr_profil.scad>
 
 $fn = 96;
 
@@ -39,24 +42,26 @@ ht_tiefe        = 40;    // nur Vorschau
 ht_x            = 300;
 ht_z            = hoehe / 2;
 
-// ---------- Bassreflexrohr: 2 Druckteile, Trichter an BEIDEN Enden ----------
-rohr_innen_d  = 50;
-rohr_wand     = 3;      // aussen 56 mm -> Lochsaege 57 mm
-rohr_d_aussen = rohr_innen_d + 2 * rohr_wand;
-flansch_d     = 90;
-flansch_h     = 10;
-flare_d       = 66;     // Trichter aussen (45 Grad, ohne Stuetzen druckbar)
-rohr_teil_l   = 105;    // Druckteil 1: Flansch + Rohr
-// Druckteil 2: innerer Trichter, wird innen auf das Rohrende gesteckt
-tr_mund_d     = 74;     // Trichteroeffnung innen
-tr_ueberstand = 12;     // ragt so weit ueber das Rohrende hinaus
-tr_muffe      = 15;     // Steckmuffe (ueberlappt das Rohr)
-tr_spiel      = 0.4;    // Spiel fuer die Muffe
-tr_aussen_d   = 80;
-rohr_gesamt   = rohr_teil_l + tr_ueberstand;   // Flansch aussen bis Trichtermund innen
+// ---------- Bassreflexrohr: Sanduhr-Rohr aus 3 Druckteilen ----------
+// Kontur, Laenge und Durchmesser stehen in rohr_profil.scad (Werte rp_...).
+// Das Rohr wird von INNEN in die Rueckwand gesetzt und schliesst aussen buendig ab.
 rohr_x        = breite / 2;  // genau mittig = Druckknoten der Breiten-Mode
 rohr_z        = hoehe / 2;   // genau mittig = Druckknoten der Hoehen-Mode
-loch_rohr_d   = 57;
+loch_rohr_d   = 102;         // Loch in der Rueckwand (Lochsaege 102 mm)
+rp_schraube_r = 57.5;        // Lochkreis der 4 Schrauben im Flansch
+// s-Koordinate entlang des Rohrs: 0 = Aussenflaeche Rueckwand, rp_L = Mund innen
+rp_mitte = rp_L / 2;                               // Trennebene der beiden Trichterteile
+rp_r_tw  = rp_rt + rp_wand;                        // Aussenradius im geraden Teil
+rp_s_fl  = rp_platte + rp_fl_h;                    // Flansch endet hier
+rp_s_la0 = rp_s_fl + (rp_r_fl - rp_r_land);        // Muffensitz Aussenteil: von ...
+rp_s_la1 = rp_s_la0 + rp_land_h;                   // ... bis
+rp_s_ka  = rp_s_la1 + (rp_r_land - rp_r_tw);       // 45-Grad-Kegel laeuft in die Rohrwand aus
+rp_s_lb0 = rp_L - rp_s_la1;                        // Muffensitz Innenteil: von ...
+rp_s_lb1 = rp_L - rp_s_la0;                        // ... bis
+rp_s_kb  = rp_s_lb0 - (rp_r_land - rp_r_tw);
+rp_s_tp  = rp_L - rp_nase - rp_nase * sin(45);     // Lippe geht hier in den 45-Grad-Kegel ueber
+rp_r_tp  = rp_rm + rp_nase * cos(45);
+rp_r_abs = rp_r_tp - (rp_s_tp - rp_s_lb1);
 
 // ---------- Kabeldurchfuehrung (Rueckwand) ----------
 kabel_d   = 12;    // fuer Kabelverschraubung M12 (dichtet + Zugentlastung)
@@ -137,39 +142,78 @@ module fensterstrebe() {
 // Rundstab: koppelt Front und Rueckwand (die beiden groessten freien Flaechen)
 module stab() { bohrung_y(stab_x, stab_z, stab_d, wand, innen[1]); }
 
-// ---------- Druckteile ----------
-// Teil 1: Flansch nach unten aufs Bett, ohne Stuetzen
-module bassreflexrohr() {
-    difference() {
-        union() {
-            cylinder(d1 = flansch_d - 4, d2 = flansch_d, h = 2);
-            translate([0, 0, 2]) cylinder(d = flansch_d, h = flansch_h - 2);
-            cylinder(d = rohr_d_aussen, h = rohr_teil_l);
-        }
-        translate([0, 0, -1]) cylinder(d = rohr_innen_d, h = rohr_teil_l + 2);
-        translate([0, 0, -0.01]) cylinder(d1 = flare_d, d2 = rohr_innen_d, h = (flare_d - rohr_innen_d) / 2);
-        for (w = [90, 210, 330]) rotate([0, 0, w]) translate([(flansch_d + flare_d) / 4 + 0.5, 0, 0]) {
-            translate([0, 0, -1]) cylinder(d = 3.8, h = flansch_h + 2);
-            translate([0, 0, -0.01]) cylinder(d1 = 7.5, d2 = 3.8, h = 1.9);
-        }
+// ---------- Druckteile des Rohrs ----------
+// Alle drei Teile drucken ohne Stuetzen: keine Flaeche haengt mehr als 45 Grad ueber.
+// Die Trichter stehen beim Druck wie eine Schale nach oben offen, so wird die
+// stroemungswichtige Innenflaeche sauber.
+
+// Querschnitt Aussentrichter als [r, s]
+module rp_kontur_aussen() {
+    polygon(concat(
+        [for (p = rp_bohrung) if (p[0] <= rp_mitte + 0.001) [p[1], p[0]]],
+        [[rp_r_tw, rp_mitte], [rp_r_tw, rp_s_ka], [rp_r_land, rp_s_la1], [rp_r_land, rp_s_la0],
+         [rp_r_fl, rp_s_fl], [rp_r_fl, rp_platte], [rp_r_zyl, rp_platte], [rp_r_zyl, 0.5],
+         [rp_r_zyl - 0.5, 0]]));
+}
+
+// Querschnitt Innentrichter als [r, s]: Kontur, eingerollte Lippe, 45-Grad-Kegel, Muffensitz
+module rp_kontur_innen() {
+    polygon(concat(
+        [for (p = rp_bohrung) if (p[0] >= rp_mitte - 0.001) [p[1], p[0]]],
+        [for (a = [5 : 5 : 135]) [rp_rm + rp_nase * sin(a), rp_L - rp_nase + rp_nase * cos(a)]],
+        rp_r_abs >= rp_r_tw
+            ? [[rp_r_abs, rp_s_lb1]]
+            : [[rp_r_tw, rp_s_tp - (rp_r_tp - rp_r_tw)], [rp_r_tw, rp_s_lb1]],
+        [[rp_r_land, rp_s_lb1], [rp_r_land, rp_s_lb0], [rp_r_tw, rp_s_kb], [rp_r_tw, rp_mitte]]));
+}
+
+// Loecher der Resonanzfalle: seite = -1 Aussenteil, +1 Innenteil (Reihen versetzt)
+module rp_falle_loecher(seite) {
+    for (k = [0 : len(rp_loch_s) - 1], i = [0 : rp_loch_n - 1])
+        rotate([0, 0, (i + 0.5 * k) * 360 / rp_loch_n])
+            translate([0, 0, rp_mitte + seite * rp_loch_s[k]]) rotate([0, 90, 0])
+                cylinder(d = rp_loch_d, h = rp_r_tw + 1, $fn = 16);
+}
+
+// 4 Senkkopfschrauben 3,5 x 16 durch den Flansch in die Rueckwand (von innen)
+module rp_schraubloecher() {
+    for (w = [45 : 90 : 315]) rotate([0, 0, w]) translate([rp_schraube_r, 0, 0]) {
+        translate([0, 0, rp_platte - 1]) cylinder(d = 3.8, h = 12, $fn = 24);
+        translate([0, 0, rp_platte + 2.6]) cylinder(d1 = 3.8, d2 = 7.6, h = 1.9, $fn = 24);
+        translate([0, 0, rp_platte + 4.49]) cylinder(d = 7.6, h = 30, $fn = 24);
     }
 }
 
-// Teil 2: innerer Trichter. Mund (z = 0) nach unten aufs Bett, ohne Stuetzen.
-// Wird durch das Tieftoener-Loch hineingereicht und auf das Rohrende geklebt.
-module trichter_innen() {
-    tr_flare_h = (tr_mund_d - rohr_innen_d) / 2;   // 45 Grad
+// Teile in Einbaulage (z = s)
+module rohr_aussen_s() {
     difference() {
-        union() {
-            cylinder(d = tr_aussen_d, h = tr_ueberstand);
-            translate([0, 0, tr_ueberstand])
-                cylinder(d1 = tr_aussen_d, d2 = rohr_d_aussen + 6, h = (tr_aussen_d - rohr_d_aussen - 6) / 2);
-            cylinder(d = rohr_d_aussen + 6, h = tr_ueberstand + tr_muffe);
-        }
-        translate([0, 0, -0.01]) cylinder(d1 = tr_mund_d, d2 = rohr_innen_d, h = tr_flare_h);
-        translate([0, 0, -1]) cylinder(d = rohr_innen_d, h = tr_ueberstand + 2);
-        translate([0, 0, tr_ueberstand]) cylinder(d = rohr_d_aussen + tr_spiel, h = tr_muffe + 1);
+        rotate_extrude($fn = 180) rp_kontur_aussen();
+        rp_falle_loecher(-1);
+        rp_schraubloecher();
     }
+}
+module rohr_innen_s() {
+    difference() {
+        rotate_extrude($fn = 180) rp_kontur_innen();
+        rp_falle_loecher(1);
+    }
+}
+module rohr_muffe_s() {
+    translate([0, 0, rp_s_la0]) difference() {
+        cylinder(r = rp_muffe_ri + rp_muffe_w, h = rp_s_lb1 - rp_s_la0, $fn = 180);
+        translate([0, 0, -1]) cylinder(r = rp_muffe_ri, h = rp_s_lb1 - rp_s_la0 + 2, $fn = 180);
+    }
+}
+
+// Teile in Drucklage (Trennebene bzw. Muffenende auf dem Druckbett)
+module rohr_aussen() { translate([0, 0, rp_mitte]) mirror([0, 0, 1]) rohr_aussen_s(); }
+module rohr_innen()  { translate([0, 0, -rp_mitte]) rohr_innen_s(); }
+module rohr_muffe()  { translate([0, 0, -rp_s_la0]) rohr_muffe_s(); }
+
+module rohr_komplett_s() {
+    color([0.20, 0.20, 0.22]) rohr_aussen_s();
+    color([0.24, 0.30, 0.40]) rohr_innen_s();
+    color([0.62, 0.62, 0.65]) rohr_muffe_s();
 }
 
 // ---------- Vorschau-Teile ----------
@@ -194,10 +238,7 @@ module hochtoener() {
 }
 
 module rohr_eingebaut() {
-    color([0.2, 0.2, 0.22]) {
-        translate([rohr_x, tiefe + flansch_h, rohr_z]) rotate([90, 0, 0]) bassreflexrohr();
-        translate([rohr_x, tiefe + flansch_h - rohr_gesamt, rohr_z]) rotate([-90, 0, 0]) trichter_innen();
-    }
+    translate([rohr_x, tiefe, rohr_z]) rotate([90, 0, 0]) rohr_komplett_s();
 }
 
 module weiche_platine() {
@@ -215,7 +256,7 @@ module daempfung(mit_deckel = true) {
         difference() {
             translate([wand, tiefe - wand - daempf, wand + weiche[2] + 5])
                 cube([innen[0], daempf, innen[2] - weiche[2] - 5]);
-            bohrung_y(rohr_x, rohr_z, tr_aussen_d + 10, tiefe - wand - daempf - 1, daempf + 2);
+            bohrung_y(rohr_x, rohr_z, 2 * rp_r_fl + 10, tiefe - wand - daempf - 1, daempf + 2);
             bohrung_y(stab_x, stab_z, stab_d + 4,      tiefe - wand - daempf - 1, daempf + 2);
         }
         // Deckel (vor und hinter der Strebe)
@@ -268,8 +309,11 @@ if (ansicht == "zusammenbau") eine_box();
 else if (ansicht == "paar") { eine_box("links"); translate([breite + 250, 0, 0]) eine_box("rechts"); }
 else if (ansicht == "schnitt") eine_box(box, ["deckel", "seite_rechts"], true);
 else if (ansicht == "explosion") explosion();
-else if (ansicht == "rohr") bassreflexrohr();
-else if (ansicht == "trichter") trichter_innen();
+else if (ansicht == "rohr_aussen") rohr_aussen();
+else if (ansicht == "rohr_innen") rohr_innen();
+else if (ansicht == "rohr_muffe") rohr_muffe();
+else if (ansicht == "rohr_schnitt")
+    difference() { rohr_komplett_s(); translate([-100, 0, -5]) cube([200, 100, rp_L + 20]); }
 else if (ansicht == "front")
     projection() rotate([-90, 0, 0]) translate([-wand, 0, -wand]) front();
 else if (ansicht == "rueckwand")
@@ -281,17 +325,16 @@ else if (ansicht == "strebe")
 // ---------- Zuschnittliste + Volumen + Abstimmung (Konsole) ----------
 brutto_l = innen[0] * innen[1] * innen[2] / 1e6;
 strebe_l = (innen[0] * innen[2] - fenster[0] * fenster[1]) * wand / 1e6;
-abzug_l  = 1.0                                                                    // Tieftoener
-         + PI * pow(rohr_d_aussen / 2, 2) * (rohr_teil_l - flansch_h - wand) / 1e6 // Rohr innen
-         + PI * pow(tr_aussen_d / 2, 2) * (tr_ueberstand + tr_muffe) / 1e6 * 0.5   // Trichter
+abzug_l  = 1.0                                              // Tieftoener
+         + rp_vol_l                                         // Rohr (aus rohr_aerodynamik.py)
          + strebe_l
          + PI * pow(stab_d / 2, 2) * innen[1] / 1e6
          + PI * pow(ht_ausschnitt_d / 2, 2) * ht_tiefe / 1e6
          + weiche[0] * weiche[1] * weiche[2] / 1e6 * 0.6;
 netto_l  = brutto_l - abzug_l;
-d_cm     = rohr_innen_d / 10;
-// beide Enden mit Trichter ~ beidseitig geflanscht: Endkorrektur 0,85 * D
-fb       = sqrt(23562.5 * d_cm * d_cm / (netto_l * (rohr_gesamt / 10 + 0.85 * d_cm)));
+
+if (wand != rp_platte) echo("ACHTUNG: Plattenstaerke geaendert -> rohr_aerodynamik.py (PLATTE) anpassen und neu rechnen");
+if (abs(netto_l - rp_netto_l) > 0.3) echo("ACHTUNG: Volumen geaendert -> rohr_aerodynamik.py neu rechnen");
 
 echo(str("ZUSCHNITT (fuer 2 Boxen)  4x Deckel/Boden  ", deckel[0], " x ", deckel[1], " mm"));
 echo(str("ZUSCHNITT (fuer 2 Boxen)  4x Seiten        ", seite[0], " x ", seite[1], " mm"));
@@ -300,6 +343,9 @@ echo(str("ZUSCHNITT (fuer 2 Boxen)  2x Fensterstrebe ", frontrk[0], " x ", front
          fenster[0], " x ", fenster[1], " R", strebe_r));
 echo(str("ZUSCHNITT (fuer 2 Boxen)  2x Rundstab Oe ", stab_d, " x ", innen[1], " mm"));
 echo(str("VOLUMEN    brutto ", brutto_l, " L, netto ca. ", netto_l, " L"));
-echo(str("ABSTIMMUNG Bassreflex ca. ", fb, " Hz (Rohr gesamt ", rohr_gesamt, " mm)"));
+echo(str("ROHR       Engstelle Oe ", 2 * rp_rt, ", Mund Oe ", 2 * rp_rm, ", Laenge ", rp_L,
+         " mm, Trichter je ", rp_trichter_l, " mm"));
+echo(str("ABSTIMMUNG Bassreflex ca. ", rp_fb, " Hz (2D-Stroemungsrechnung, rohr_aerodynamik.py)"));
+echo(str("FALLE      Rohrresonanz ca. ", rp_f_rohr, " Hz, Absorber 4 x ", rp_loch_n, " Loecher -> ", rp_f_falle, " Hz"));
 echo(str("MODEN      Breite ", round(343000 / (2 * innen[0])), " Hz, Tiefe ", round(343000 / (2 * innen[1])),
          " Hz, Hoehe ", round(343000 / (2 * innen[2])), " Hz"));
