@@ -13,7 +13,8 @@ und wenig Eigenresonanz ausgelegt ist.
 | **Holz** | **Buche 18 mm**, am besten als **Buche-Multiplex** (siehe unten) |
 | **Außenmaße** | 40 cm breit × 30 cm tief × 25 cm hoch |
 | **Innenvolumen** | 20,6 L brutto, **ca. 18,5 L netto** |
-| **Chassis** | Tieftöner Ø 18 cm + Hochtöner |
+| **Chassis** | **Hertz K 165 Fan Edition**: Tieftöner 165 mm (Aufnahme 116, Tiefe 45 mm) + 24-mm-Hochtöner, 4 Ω, 50 W RMS / 300 W Spitze, 92 dB, Weiche (6 dB/Okt.) liegt bei |
+| **Betrieb mit dem K 165** | **geschlossen**, mit gedrucktem Stopfen D im Rohr (Begründung unten) |
 | **Bassreflex** | **Sanduhr-Rohr** mittig in der Rückwand: Engstelle Ø 50, Münder Ø 98, außen bündig, **44,7 Hz** (Strömungsrechnung) |
 | **Deckel** | geschlossen, ohne Ausschnitt |
 | **Rückwand** | Kabeldurchführung Ø 12 mm (für eine M12-Kabelverschraubung) |
@@ -73,15 +74,38 @@ Alle Maße sind Mittelpunkte, von **vorne** gesehen ab der **linken unteren Auß
 
 | Was | Ø | x links | x rechts | z (von unten) | Platte |
 |---|---|---|---|---|---|
-| Tieftöner | 155 mm + 45°-Fase innen (10 mm) | 150 | 250 | 125 | Front |
+| Tieftöner | **116 mm** + 45°-Fase innen (10 mm) | 150 | 250 | 125 | Front |
 | Hochtöner | 30,2 mm ⚠️ | 300 | 100 | 125 | Front |
 | Bassreflexrohr | **102 mm** (Lochsäge) | 200 | 200 | 125 | Rückwand |
 | Kabeldurchführung | 12 mm | 340 | 60 | 50 | Rückwand |
 | Rundstab | Ø 20 | 255 | 145 | 70 | Front ↔ Rückwand (innen) |
 | Fensterstrebe | – | – | – | – | Vorderkante 121 mm hinter der Außenfront |
 
-⚠️ Die 30,2 mm stammen aus deiner Skizze. **Vor dem Bohren mit dem Datenblatt des Hochtöners vergleichen.**
+⚠️ Die 116 mm stammen aus dem Datenblatt („Außen-Ø / Aufnahme × Tiefe: 165/116 × 45 mm“) –
+trotzdem vor dem Sägen die Schablone bzw. den Tieftöner selbst auflegen. Die 30,2 mm für den
+Hochtöner stammen aus deiner Skizze: am mitgelieferten Einbaubecher nachmessen.
 Die Kabeldurchführung liegt bei beiden Boxen auf der **Innenseite** (zur Mitte hin), wo meist der Verstärker steht.
+
+## Die Chassis: Hertz K 165 Fan Edition
+
+Laut Datenblatt: 165-mm-Tieftöner (Aufnahme 116 mm, Einbautiefe 45 mm – passt mit riesigem
+Abstand vor die Strebe), 24-mm-Kalotte, 4 Ω, 50 W RMS / 300 W Spitze, 92 dB, 50 Hz–22 kHz,
+**Frequenzweiche 6 dB/Okt. liegt getrennt bei**.
+
+### Geschlossen oder Bassreflex? Mit dem K 165: geschlossen.
+
+Das K 165 ist ein Auto-Chassis für den Türeinbau: flach (45 mm), leicht (0,7 kg) und mit hoher
+Gesamtgüte gebaut (vergleichbare Hertz-165er liegen bei Qts ≈ 0,6; fürs K 165 selbst nennt Hertz
+keine Thiele-Small-Werte). Bassreflex lohnt sich erst ab Qts ≤ etwa 0,45 – mit diesem Chassis
+würde das 45-Hz-Rohr kaum Tiefbass bringen und den Oberbass unpräzise machen. **Geschlossen**
+passen die 17,8 L dagegen sehr gut: Einbaugüte um 0,75–0,85, untere Grenze um 80–90 Hz,
+straffer Bass – tiefer kann dieses Chassis auch mit Rohr nicht sauber.
+
+Darum **Druckteil D, der Stopfen** (`rohr_stopfen.stl`): Er folgt der gerechneten Trichterkontur
+mit 0,6 mm Spiel. Mit 1–2 Lagen Filz- oder Moosgummiband umwickelt von außen ins Rohr drücken –
+die überstehende Deckplatte (Ø 104) ist der Griff. Rohr trotzdem einbauen: Du kannst beide
+Varianten anhören, und für einen späteren Hifi-Tieftöner mit Qts ≤ 0,45 ziehst du einfach den
+Stopfen.
 
 ## Das Bassreflexrohr: strömungsmechanisch ausgelegt
 
@@ -124,6 +148,7 @@ Ausgelegt wird es vom Skript `rohr_aerodynamik.py`:
 | A – Außentrichter mit Wandsitz | `rohr_aussen.stl` | Trennebene nach unten (Trichter als Schale nach oben) |
 | B – Muffe (Außenwand der Ringkammer) | `rohr_muffe.stl` | stehend |
 | C – Innentrichter mit Lippe | `rohr_innen.stl` | Trennebene nach unten |
+| D – Stopfen für geschlossenen Betrieb | `rohr_stopfen.stl` | Deckplatte nach unten |
 
 - PETG oder PLA, 0,2 mm Schichten, 3 Perimeter, 15–20 % Infill, **ohne Stützen** (nichts hängt über 45°).
 - Alle Teile passen auf ein 180-mm-Bett (größtes Teil Ø 126 mm).
@@ -141,10 +166,11 @@ Ausgelegt wird es vom Skript `rohr_aerodynamik.py`:
 
 ## Hochtöner und Weiche
 
-- **Weiche ist Pflicht**, sonst geht der Hochtöner kaputt. Am einfachsten ist ein bipolarer Folienkondensator (MKT/MKP) vor dem Hochtöner: 4,7 µF bei 8 Ω, 10 µF bei 4 Ω (Trennung bei ca. 4 kHz). Besser ist eine fertige 2-Wege-Weiche (12 dB, 3–4 kHz).
-- Der Hochtöner muss **hinten geschlossen** sein. Eine Hochton-Box im eigenen Gehäuse ist das bereits.
-- Ist der Hochtöner zu laut, kommt ein Widerstand (2–4 Ω, 5 W) in Reihe davor.
-- **Beide Boxen identisch verkabeln** und dabei auf + und − achten, sonst fehlt der Bass.
+- **Die Weiche liegt dem K 165 bei** (6 dB/Okt., getrennte Bauteile): innen auf den Boden
+  schrauben, Kabel festlegen. Kein Selbstbau nötig.
+- Die 24-mm-Kalotte des Sets ist hinten geschlossen und darf direkt in die Front.
+- **Beide Boxen identisch verkabeln** und auf + und − achten, sonst fehlt der Bass.
+- Das Set hat 4 Ω: einen Verstärker nehmen, der 4 Ω treibt (fast jedes Class-D-Modul).
 
 ## Bauablauf
 
@@ -164,14 +190,18 @@ Ausgelegt wird es vom Skript `rohr_aerodynamik.py`:
 
 ## Offene Punkte
 
-- **Hochtöner:** Welches Modell und wie viel Ω? Dann prüfe ich Ausschnitt und Weiche.
-- **Tieftöner:** Modell oder Datenblatt (Qts, Vas, Fs). Dann stimme ich Rohrlänge und Volumen genau darauf ab.
+- Vor dem Sägen die Aufnahme am echten Chassis prüfen: Tieftöner 116 mm (Datenblatt),
+  Hochtöner-Becher 30,2 mm (deine Messung).
+- Hertz nennt keine Thiele-Small-Werte fürs K 165. Wer die Empfehlung „geschlossen“ prüfen
+  will, misst Fs/Qts (z. B. mit REW und Messwiderstand) – liegt Qts unter 0,45, darf der
+  Stopfen dauerhaft raus.
 
 ## Dateien
 
 - `lautsprecherbox.scad`: parametrisches Modell. `box = "links"` oder `"rechts"`. Ansichten: `zusammenbau`, `paar`, `schnitt`, `explosion`, `rohr_aussen`, `rohr_innen`, `rohr_muffe`, `rohr_schnitt`, `front`, `rueckwand`, `strebe`. Zuschnitte, Volumen, Abstimmung und Moden erscheinen in der Konsole.
 - `rohr_aerodynamik.py`: Auslegung des Rohrs (Kontur, Strömungsrechnung, Resonanzfalle); schreibt `rohr_profil.scad` und `stroemung.png`
 - `rohr_profil.scad`: berechnete Innenkontur, wird vom Modell eingebunden
-- `rohr_aussen.stl`, `rohr_muffe.stl`, `rohr_innen.stl`: die 3 Druckteile (je 2× drucken)
+- `rohr_aussen.stl`, `rohr_muffe.stl`, `rohr_innen.stl`: die 3 Rohr-Druckteile (je 2× drucken)
+- `rohr_stopfen.stl`: Stopfen für geschlossenen Betrieb (je Box 1×, also 2× drucken)
 - `stroemung.png`: Strömungsbild der Rechnung
 - `vorschau.png`: Vorschau

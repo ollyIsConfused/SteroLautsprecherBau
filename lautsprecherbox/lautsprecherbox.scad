@@ -1,5 +1,5 @@
 // Lautsprecherbox (Stereo-Paar, 2 Stueck) – Buche 18 mm
-// 40 x 30 x 25 cm, 2-Wege: Tieftoener Oe 18 cm + Hochtoener, Sanduhr-Bassreflexrohr hinten
+// 4 Ohm, 50 W RMS / 300 W Spitze, 92 dB. Korb aussen 165 mm, Aufnahme 116, Einbautiefe 45 mm.
 // Einheiten: mm.  Koordinaten (Box "links", von vorne gesehen):
 //   x = Breite (links -> rechts), y = Tiefe (Front bei y = 0), z = Hoehe (Boden bei z = 0)
 // Box "rechts" ist das Spiegelbild: Hochtoener sitzen bei beiden Boxen innen (zur Mitte).
@@ -27,16 +27,17 @@ tiefe  = 300;
 hoehe  = 250;
 wand   = 18;     // Buche-Multiplex 18 mm (oder Buche-Leimholz 18 mm)
 
-// ---------- Tieftoener ----------
-chassis_d     = 180;   // Korb aussen
-ausschnitt_d  = 155;   // Einbauausschnitt
+// ---------- Tieftoener: Hertz K 165 Fan Edition (Uno-Serie) ----------
+// 4 Ohm, 75 W RMS / 300 W Spitze, 93,5 dB. Korb aussen 164,6 mm, Einbautiefe 63 mm.
+chassis_d     = 165;   // Korb aussen (164,6 mm)
+ausschnitt_d  = 116;   // Aufnahme laut Datenblatt Fan Edition (165/116 x 45 mm) -> Schablone pruefen
 fase          = 10;    // 45-Grad-Fase hinten am Ausschnitt (Membran "atmet" frei)
 chassis_x     = 150;
 chassis_z     = hoehe / 2;
-chassis_tiefe = 85;    // nur Vorschau/Kollisionscheck
+chassis_tiefe = 45;    // Einbautiefe laut Datenblatt; nur Vorschau/Kollisionscheck
 
-// ---------- Hochtoener (innen, zur Mitte des Paares) ----------
-ht_ausschnitt_d = 30.2;  // aus Skizze -> VOR DEM BOHREN mit Datenblatt pruefen!
+// ---------- Hochtoener: 24-mm-Kalotte des K 165 ----------
+ht_ausschnitt_d = 30.2;  // aus deiner Messung -> VOR DEM BOHREN am Einbaubecher pruefen (Haendlerangabe waere 36)
 ht_flansch_d    = 60;    // nur Vorschau
 ht_tiefe        = 40;    // nur Vorschau
 ht_x            = 300;
@@ -210,6 +211,21 @@ module rohr_aussen() { translate([0, 0, rp_mitte]) mirror([0, 0, 1]) rohr_aussen
 module rohr_innen()  { translate([0, 0, -rp_mitte]) rohr_innen_s(); }
 module rohr_muffe()  { translate([0, 0, -rp_s_la0]) rohr_muffe_s(); }
 
+// Stopfen: verschliesst das Rohr von aussen -> die Box laeuft geschlossen.
+// Folgt der gerechneten Innenkontur mit 0,6 mm Spiel; vor dem Einsetzen mit
+// Filz- oder Moosgummiband umwickeln, dann sitzt er fest und luftdicht.
+stopfen_t     = 45;    // Eintauchtiefe
+stopfen_spiel = 0.6;
+module rohr_stopfen() {
+    // Griff = die 6 mm dicke Deckplatte selbst: sie steht vor der Rueckwand
+    // und laesst sich am Rand fassen. Drucklage: Platte flach aufs Bett.
+    rotate_extrude($fn = 180) polygon(concat(
+        [[0, 0], [50, 0], [52, 2], [52, 6]],
+        [for (p = rp_bohrung) if (p[0] > 0.5 && p[0] <= stopfen_t)
+            [p[1] - stopfen_spiel, p[0] + 6]],
+        [[0, stopfen_t + 6]]));
+}
+
 module rohr_komplett_s() {
     color([0.20, 0.20, 0.22]) rohr_aussen_s();
     color([0.24, 0.30, 0.40]) rohr_innen_s();
@@ -312,6 +328,7 @@ else if (ansicht == "explosion") explosion();
 else if (ansicht == "rohr_aussen") rohr_aussen();
 else if (ansicht == "rohr_innen") rohr_innen();
 else if (ansicht == "rohr_muffe") rohr_muffe();
+else if (ansicht == "rohr_stopfen") rohr_stopfen();
 else if (ansicht == "rohr_schnitt")
     difference() { rohr_komplett_s(); translate([-100, 0, -5]) cube([200, 100, rp_L + 20]); }
 else if (ansicht == "front")
