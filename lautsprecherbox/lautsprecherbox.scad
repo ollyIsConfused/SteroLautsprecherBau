@@ -15,6 +15,8 @@
 
 ansicht = "zusammenbau";
 box     = "links";      // "links" oder "rechts" (Spiegelbild)
+bauart  = "geschlossen"; // "geschlossen" (fuer das Hertz K 165, ohne Rohrloch)
+                         // oder "bassreflex" (mit Sanduhr-Rohr, fuer Chassis mit Qts <= 0,45)
 
 // Innenkontur + Masse des Rohrs, berechnet von rohr_aerodynamik.py
 include <rohr_profil.scad>
@@ -126,7 +128,7 @@ module front() {
 module rueckwand() {
     difference() {
         translate([wand, tiefe - wand, wand]) cube([innen[0], wand, innen[2]]);
-        bohrung_y(rohr_x,  rohr_z,  loch_rohr_d, tiefe - wand - 1);
+        if (bauart == "bassreflex") bohrung_y(rohr_x, rohr_z, loch_rohr_d, tiefe - wand - 1);
         bohrung_y(kabel_x, kabel_z, kabel_d,     tiefe - wand - 1);
     }
 }
@@ -272,7 +274,8 @@ module daempfung(mit_deckel = true) {
         difference() {
             translate([wand, tiefe - wand - daempf, wand + weiche[2] + 5])
                 cube([innen[0], daempf, innen[2] - weiche[2] - 5]);
-            bohrung_y(rohr_x, rohr_z, 2 * rp_r_fl + 10, tiefe - wand - daempf - 1, daempf + 2);
+            if (bauart == "bassreflex")
+                bohrung_y(rohr_x, rohr_z, 2 * rp_r_fl + 10, tiefe - wand - daempf - 1, daempf + 2);
             bohrung_y(stab_x, stab_z, stab_d + 4,      tiefe - wand - daempf - 1, daempf + 2);
         }
         // Deckel (vor und hinter der Strebe)
@@ -300,7 +303,7 @@ module box_links(ohne = [], innenleben = false) {
     holz(ohne);
     tieftoener();
     hochtoener();
-    rohr_eingebaut();
+    if (bauart == "bassreflex") rohr_eingebaut();
     if (innenleben) { weiche_platine(); daempfung(mit_deckel = !enthalten("deckel", ohne)); }
 }
 
@@ -343,15 +346,15 @@ else if (ansicht == "strebe")
 brutto_l = innen[0] * innen[1] * innen[2] / 1e6;
 strebe_l = (innen[0] * innen[2] - fenster[0] * fenster[1]) * wand / 1e6;
 abzug_l  = 1.0                                              // Tieftoener
-         + rp_vol_l                                         // Rohr (aus rohr_aerodynamik.py)
+         + (bauart == "bassreflex" ? rp_vol_l : 0)          // Rohr (aus rohr_aerodynamik.py)
          + strebe_l
          + PI * pow(stab_d / 2, 2) * innen[1] / 1e6
          + PI * pow(ht_ausschnitt_d / 2, 2) * ht_tiefe / 1e6
          + weiche[0] * weiche[1] * weiche[2] / 1e6 * 0.6;
 netto_l  = brutto_l - abzug_l;
 
-if (wand != rp_platte) echo("ACHTUNG: Plattenstaerke geaendert -> rohr_aerodynamik.py (PLATTE) anpassen und neu rechnen");
-if (abs(netto_l - rp_netto_l) > 0.3) echo("ACHTUNG: Volumen geaendert -> rohr_aerodynamik.py neu rechnen");
+if (bauart == "bassreflex" && wand != rp_platte) echo("ACHTUNG: Plattenstaerke geaendert -> rohr_aerodynamik.py (PLATTE) anpassen und neu rechnen");
+if (bauart == "bassreflex" && abs(netto_l - rp_netto_l) > 0.3) echo("ACHTUNG: Volumen geaendert -> rohr_aerodynamik.py neu rechnen");
 
 echo(str("ZUSCHNITT (fuer 2 Boxen)  4x Deckel/Boden  ", deckel[0], " x ", deckel[1], " mm"));
 echo(str("ZUSCHNITT (fuer 2 Boxen)  4x Seiten        ", seite[0], " x ", seite[1], " mm"));
@@ -360,9 +363,13 @@ echo(str("ZUSCHNITT (fuer 2 Boxen)  2x Fensterstrebe ", frontrk[0], " x ", front
          fenster[0], " x ", fenster[1], " R", strebe_r));
 echo(str("ZUSCHNITT (fuer 2 Boxen)  2x Rundstab Oe ", stab_d, " x ", innen[1], " mm"));
 echo(str("VOLUMEN    brutto ", brutto_l, " L, netto ca. ", netto_l, " L"));
-echo(str("ROHR       Engstelle Oe ", 2 * rp_rt, ", Mund Oe ", 2 * rp_rm, ", Laenge ", rp_L,
-         " mm, Trichter je ", rp_trichter_l, " mm"));
-echo(str("ABSTIMMUNG Bassreflex ca. ", rp_fb, " Hz (2D-Stroemungsrechnung, rohr_aerodynamik.py)"));
-echo(str("FALLE      Rohrresonanz ca. ", rp_f_rohr, " Hz, Absorber 4 x ", rp_loch_n, " Loecher -> ", rp_f_falle, " Hz"));
+if (bauart == "bassreflex") {
+    echo(str("ROHR       Engstelle Oe ", 2 * rp_rt, ", Mund Oe ", 2 * rp_rm, ", Laenge ", rp_L,
+             " mm, Trichter je ", rp_trichter_l, " mm"));
+    echo(str("ABSTIMMUNG Bassreflex ca. ", rp_fb, " Hz (2D-Stroemungsrechnung, rohr_aerodynamik.py)"));
+    echo(str("FALLE      Rohrresonanz ca. ", rp_f_rohr, " Hz, Absorber 4 x ", rp_loch_n, " Loecher -> ", rp_f_falle, " Hz"));
+} else {
+    echo("BAUART     geschlossen (Hertz K 165): KEIN 102-mm-Loch in der Rueckwand, Druckteile optional");
+}
 echo(str("MODEN      Breite ", round(343000 / (2 * innen[0])), " Hz, Tiefe ", round(343000 / (2 * innen[1])),
          " Hz, Hoehe ", round(343000 / (2 * innen[2])), " Hz"));

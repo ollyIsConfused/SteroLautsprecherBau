@@ -14,7 +14,8 @@ und wenig Eigenresonanz ausgelegt ist.
 | **Außenmaße** | 40 cm breit × 30 cm tief × 25 cm hoch |
 | **Innenvolumen** | 20,6 L brutto, **ca. 18,5 L netto** |
 | **Chassis** | **Hertz K 165 Fan Edition**: Tieftöner 165 mm (Aufnahme 116, Tiefe 45 mm) + 24-mm-Hochtöner, 4 Ω, 50 W RMS / 300 W Spitze, 92 dB, Weiche (6 dB/Okt.) liegt bei |
-| **Betrieb mit dem K 165** | **geschlossen**, mit gedrucktem Stopfen D im Rohr (Begründung unten) |
+| **Betrieb mit dem K 165** | **geschlossen** – Rückwand ohne Rohrloch (`bauart = "geschlossen"`, Standard) |
+| **Bauanleitung** | **Schritt für Schritt: [BAUPLAN.md](BAUPLAN.md)** mit bemaßter Zeichnung [bauplan.png](bauplan.png) |
 | **Bassreflex** | **Sanduhr-Rohr** mittig in der Rückwand: Engstelle Ø 50, Münder Ø 98, außen bündig, **44,7 Hz** (Strömungsrechnung) |
 | **Deckel** | geschlossen, ohne Ausschnitt |
 | **Rückwand** | Kabeldurchführung Ø 12 mm (für eine M12-Kabelverschraubung) |
@@ -101,11 +102,12 @@ würde das 45-Hz-Rohr kaum Tiefbass bringen und den Oberbass unpräzise machen. 
 passen die 17,8 L dagegen sehr gut: Einbaugüte um 0,75–0,85, untere Grenze um 80–90 Hz,
 straffer Bass – tiefer kann dieses Chassis auch mit Rohr nicht sauber.
 
-Darum **Druckteil D, der Stopfen** (`rohr_stopfen.stl`): Er folgt der gerechneten Trichterkontur
-mit 0,6 mm Spiel. Mit 1–2 Lagen Filz- oder Moosgummiband umwickelt von außen ins Rohr drücken –
-die überstehende Deckplatte (Ø 104) ist der Griff. Rohr trotzdem einbauen: Du kannst beide
-Varianten anhören, und für einen späteren Hifi-Tieftöner mit Qts ≤ 0,45 ziehst du einfach den
-Stopfen.
+Darum ist im Modell jetzt `bauart = "geschlossen"` der Standard: Die Rückwand bekommt
+**kein** 102-mm-Loch, gedruckt werden muss nichts, und die Dämmung darf die Rückwand komplett
+bedecken. Der gesamte Rohr-Abschnitt unten bleibt für die Bassreflex-Variante erhalten
+(`bauart = "bassreflex"`), z. B. für einen späteren Hifi-Tieftöner mit Qts ≤ 0,45. Wer dann
+beide Varianten vergleichen will, druckt zusätzlich den Stopfen D (`rohr_stopfen.stl`):
+mit Filzband umwickelt verschließt er das Rohr, und die Box läuft wieder geschlossen.
 
 ## Das Bassreflexrohr: strömungsmechanisch ausgelegt
 
@@ -184,9 +186,9 @@ Ausgelegt wird es vom Skript `rohr_aerodynamik.py`:
 8. **Rohr** einbauen wie oben beschrieben (Teil A von innen, Wolle, Muffe, Teil C).
 9. **Ölen** (Hartwachsöl oder Leinölfirnis). Buche wird dadurch warm-honigfarben und dunkelt mit der Zeit nach. Unten Filz- oder Gummifüße anbringen.
 10. **Chassis** mit Dichtband einsetzen und mit Spax 4 × 25 festschrauben (vorbohren). Buche hält Schrauben sehr gut.
-11. **Dichtigkeitstest:** Rohr zuhalten, die Membran vorsichtig eindrücken und kurz halten. Der Gegendruck muss bleiben.
+11. **Dichtigkeitstest:** Die Membran vorsichtig eindrücken und halten. Der Gegendruck muss stehen bleiben (geschlossene Box; bei der Bassreflex-Variante vorher das Rohr zuhalten).
 
-**Aufstellen:** mindestens **15–20 cm Abstand zur Wand** (das Rohr ist hinten), die Hochtöner zeigen zur Mitte.
+**Aufstellen:** Geschlossen ist der Wandabstand unkritisch; die Hochtöner zeigen zur Mitte. (Mit Bassreflexrohr: mindestens 15–20 cm von der Wand.)
 
 ## Offene Punkte
 
@@ -198,7 +200,8 @@ Ausgelegt wird es vom Skript `rohr_aerodynamik.py`:
 
 ## Dateien
 
-- `lautsprecherbox.scad`: parametrisches Modell. `box = "links"` oder `"rechts"`. Ansichten: `zusammenbau`, `paar`, `schnitt`, `explosion`, `rohr_aussen`, `rohr_innen`, `rohr_muffe`, `rohr_schnitt`, `front`, `rueckwand`, `strebe`. Zuschnitte, Volumen, Abstimmung und Moden erscheinen in der Konsole.
+- `BAUPLAN.md` + `bauplan.png` + `bauplan.py`: Schritt-für-Schritt-Anleitung mit bemaßter Zeichnung
+- `lautsprecherbox.scad`: parametrisches Modell. `bauart = "geschlossen"` (Standard) oder `"bassreflex"`; `box = "links"` oder `"rechts"`. Ansichten: `zusammenbau`, `paar`, `schnitt`, `explosion`, `rohr_aussen`, `rohr_innen`, `rohr_muffe`, `rohr_schnitt`, `front`, `rueckwand`, `strebe`. Zuschnitte, Volumen, Abstimmung und Moden erscheinen in der Konsole.
 - `rohr_aerodynamik.py`: Auslegung des Rohrs (Kontur, Strömungsrechnung, Resonanzfalle); schreibt `rohr_profil.scad` und `stroemung.png`
 - `rohr_profil.scad`: berechnete Innenkontur, wird vom Modell eingebunden
 - `rohr_aussen.stl`, `rohr_muffe.stl`, `rohr_innen.stl`: die 3 Rohr-Druckteile (je 2× drucken)
